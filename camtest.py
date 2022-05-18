@@ -2,12 +2,61 @@ import cv2
 import json
 import numpy as np
 
+def callbackH(x):
+    global hsv
+    
+    hsv['low H'] = cv2.getTrackbarPos('low H','controls')
+    hsv['high H'] = cv2.getTrackbarPos('high H','controls')
+
+def callbackS(x):
+    global hsv
+    
+    hsv['low S'] = cv2.getTrackbarPos('low S','controls')
+    hsv['high S'] = cv2.getTrackbarPos('high S','controls')
+
+def callbackV(x):
+    global hsv
+
+    hsv['low V'] = cv2.getTrackbarPos('low V','controls')
+    hsv['high V'] = cv2.getTrackbarPos('high V','controls')
+
+
+
 def capture(cam):
     check, frame = cam.read()
     return frame
 
+def detect_circles(img, minRadius, maxRadius):
+    output = img.copy()
+    # image = cv2.cvtColor(output, cv2.COLOR_HSV2RGB)
+    image = cv2.cvtColor(output, cv2.COLOR_BGR2GRAY)
+    circles = cv2.HoughCircles(image=image, 
+                           method=cv2.HOUGH_GRADIENT, 
+                           dp=1.5, 
+                           minDist=2*minRadius,
+                           param1=50,
+                           param2=50,
+                           minRadius=minRadius,
+                           maxRadius=maxRadius                           
+                          )
+
+    if circles is not None:
+        circles_round =  np.round(circles[0, :]).astype("int")
+        for (x, y, r) in circles_round:
+            # draw the outer circle
+            cv2.circle(img, (x, y), r, (0, 255, 0), 2)
+            # draw the center of the circle
+            cv2.circle(img,(x, y),2,(0,0,255),3)
+
+
+    return img
+
 def filter_img(frame, low_tresh, high_tresh):
-    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    # median filter to remove salt&pepper
+    median = cv2.medianBlur(frame, 5)
+
+    # color conversion and selection\
+    hsv = cv2.cvtColor(median, cv2.COLOR_BGR2HSV)
     mask = cv2.inRange(hsv, low_tresh, high_tresh)
     result = cv2.bitwise_and(frame, frame, mask = mask)
 
@@ -32,26 +81,6 @@ def load_values(filename):
                 "low V" : 0,
                 "high V" : 255,
                 }
-
-
-
-def callbackH(x):
-    global hsv
-    
-    hsv['low H'] = cv2.getTrackbarPos('low H','controls')
-    hsv['high H'] = cv2.getTrackbarPos('high H','controls')
-
-def callbackS(x):
-    global hsv
-    
-    hsv['low S'] = cv2.getTrackbarPos('low S','controls')
-    hsv['high S'] = cv2.getTrackbarPos('high S','controls')
-
-def callbackV(x):
-    global hsv
-
-    hsv['low V'] = cv2.getTrackbarPos('low V','controls')
-    hsv['high V'] = cv2.getTrackbarPos('high V','controls')
 
 
 ####### this code is an alternative for the lines beneath, but its not very robust ######
@@ -87,6 +116,7 @@ if __name__ == "__main__":
         hsv_high = np.array([hsv['high H'], hsv['high S'], hsv['high V']])
 
         res = filter_img(img, hsv_low, hsv_high)
+        res = detect_circles(res, 1, 1000)
 
         cv2.imshow('original', img)
         cv2.imshow('res', res)
