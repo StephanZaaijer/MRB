@@ -27,7 +27,11 @@ def callbackRad(x):
 
 def callbackDist(x):
     global hsv
-    hsv['min Dist'] = cv2.getTrackbarPos('min Dist','controls')
+    temp = cv2.getTrackbarPos('min Dist','controls')
+    if (temp==0):
+        hsv['min Dist'] = 1
+    else:
+        hsv['min Dist'] = temp
 
 
 def capture(cam):
@@ -47,17 +51,27 @@ def detect_circles(img, minRadius, maxRadius, minDist):
                            minRadius=minRadius,
                            maxRadius=maxRadius                           
                           )
-
     if circles is not None:
+        sum_x=0
+        sum_y=0
         circles_round =  np.round(circles[0, :]).astype("int")
         for (x, y, r) in circles_round:
             # draw the outer circle
             cv2.circle(img, (x, y), r, (0, 255, 0), 2)
             # draw the center of the circle
             cv2.circle(img,(x, y),2,(0,0,255),3)
+            sum_x+=x
+            sum_y+=y
+        
+        
+        x_gem = int(sum_x/len(circles_round))
+        x_gem  = int(sum_y/len(circles_round))
+        
+        cv2.circle(img,(x_gem , y_gem),2,(255,255,255),3)
 
 
-    return img
+
+    return img, (x_gem , y_gem )
 
 def filter_img(frame, low_tresh, high_tresh):
     # median filter to remove salt&pepper
@@ -139,7 +153,7 @@ if __name__ == "__main__":
 
         res = filter_img(img, hsv_low, hsv_high)
                 
-        res = detect_circles(res, hsv['min Rad'], hsv['max Rad'], hsv['min Dist'])
+        res, gem_loc = detect_circles(res, hsv['min Rad'], hsv['max Rad'], hsv['min Dist'])
 
         cv2.imshow('original', img)
         cv2.imshow('res', res)
