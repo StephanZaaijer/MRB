@@ -1,8 +1,0 @@
-{
-    "low H": 86,
-    "high H": 153,
-    "low S": 0,
-    "high S": 228,
-    "low V": 173,
-    "high V": 255
-}
