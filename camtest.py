@@ -20,20 +20,28 @@ def callbackV(x):
     hsv['low V'] = cv2.getTrackbarPos('low V','controls')
     hsv['high V'] = cv2.getTrackbarPos('high V','controls')
 
+def callbackRad(x):
+    global hsv
+    hsv['min Rad'] = cv2.getTrackbarPos('min Rad','controls')
+    hsv['max Rad'] = cv2.getTrackbarPos('max Rad','controls')
+
+def callbackDist(x):
+    global hsv
+    hsv['min Dist'] = cv2.getTrackbarPos('min Dist','controls')
 
 
 def capture(cam):
     check, frame = cam.read()
     return frame
 
-def detect_circles(img, minRadius, maxRadius):
+def detect_circles(img, minRadius, maxRadius, minDist):
     output = img.copy()
     # image = cv2.cvtColor(output, cv2.COLOR_HSV2RGB)
     image = cv2.cvtColor(output, cv2.COLOR_BGR2GRAY)
     circles = cv2.HoughCircles(image=image, 
                            method=cv2.HOUGH_GRADIENT, 
                            dp=1.5, 
-                           minDist=2*minRadius,
+                           minDist=minDist,
                            param1=50,
                            param2=50,
                            minRadius=minRadius,
@@ -80,6 +88,9 @@ def load_values(filename):
                 "high S" : 255,
                 "low V" : 0,
                 "high V" : 255,
+                "min Rad": 1,
+                "max Rad": 1000,
+                "min Dist": 1
                 }
 
 
@@ -94,19 +105,30 @@ def load_values(filename):
 if __name__ == "__main__":
     cv2.namedWindow('controls')
 
-    hsv = load_values('values.txt')
+    hsv = load_values('values.json')
     maxH = 255
     maxS = 255
     maxV = 255
+    maxRad = 1000
+    maxDist = 1000
 
-    names = ['low H', 'high H', 'low S', 'high S', 'low V', 'high V']
+    names = ['low H', 'high H', 'low S', 'high S', 'low V', 'high V', 'min Rad', 'max Rad', 'min Dist']
 
     cv2.createTrackbar('low H','controls',hsv['low H'], maxH,callbackH)
     cv2.createTrackbar('high H','controls',hsv['high H'], maxH,callbackH)
+    
     cv2.createTrackbar('low S','controls',hsv['low S'], maxS,callbackS)
     cv2.createTrackbar('high S','controls',hsv['high S'], maxS,callbackS)
+    
     cv2.createTrackbar('low V','controls',hsv['low V'], maxV,callbackV)
     cv2.createTrackbar('high V','controls',hsv['high V'], maxV,callbackV)
+    
+    cv2.createTrackbar('min Rad','controls',hsv['min Rad'], maxRad,callbackRad)
+    cv2.createTrackbar('max Rad','controls',hsv['max Rad'], maxRad,callbackRad)
+    
+    cv2.createTrackbar('min Dist','controls',hsv['min Dist'], maxDist,callbackDist)
+    
+    
 
     cam = cv2.VideoCapture(0)
     while(True):
@@ -116,7 +138,8 @@ if __name__ == "__main__":
         hsv_high = np.array([hsv['high H'], hsv['high S'], hsv['high V']])
 
         res = filter_img(img, hsv_low, hsv_high)
-        res = detect_circles(res, 1, 1000)
+                
+        res = detect_circles(res, hsv['min Rad'], hsv['max Rad'], hsv['min Dist'])
 
         cv2.imshow('original', img)
         cv2.imshow('res', res)
@@ -125,5 +148,5 @@ if __name__ == "__main__":
         if k == 27:
             break
     cv2.destroyAllWindows()
-    write_values('values.txt', hsv)
+    write_values('values.json', hsv)
 

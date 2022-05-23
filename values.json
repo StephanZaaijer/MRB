@@ -1,0 +1,11 @@
+{
+    "low H": 58,
+    "high H": 94,
+    "low S": 83,
+    "high S": 255,
+    "low V": 89,
+    "high V": 255,
+    "min Rad": 4,
+    "max Rad": 53,
+    "min Dist": 108
+}
