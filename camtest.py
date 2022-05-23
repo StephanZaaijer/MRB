@@ -1,6 +1,7 @@
 import cv2
 import json
 import numpy as np
+import serial
 
 def callbackH(x):
     global hsv
@@ -117,6 +118,10 @@ def load_values(filename):
 #######                                                                            ######
 
 if __name__ == "__main__":
+    
+    conn = serial.Serial('/dev/ttyACM0', 9600, timeout=1)
+    conn.flush();
+    
     cv2.namedWindow('controls')
 
     hsv = load_values('values.json')
@@ -154,7 +159,7 @@ if __name__ == "__main__":
         res = filter_img(img, hsv_low, hsv_high)
                 
         res, gem_loc = detect_circles(res, hsv['min Rad'], hsv['max Rad'], hsv['min Dist'])
-
+        conn.write(gem_loc)
         cv2.imshow('original', img)
         cv2.imshow('res', res)
 
