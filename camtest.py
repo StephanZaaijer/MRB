@@ -51,6 +51,8 @@ def detect_circles(img, minRadius, maxRadius, minDist):
                            minRadius=minRadius,
                            maxRadius=maxRadius                           
                           )
+    x_gem = None
+    y_gem = None
     if circles is not None:
         sum_x=0
         sum_y=0
@@ -65,7 +67,7 @@ def detect_circles(img, minRadius, maxRadius, minDist):
         
         
         x_gem = int(sum_x/len(circles_round))
-        x_gem  = int(sum_y/len(circles_round))
+        y_gem  = int(sum_y/len(circles_round))
         
         cv2.circle(img,(x_gem , y_gem),2,(255,255,255),3)
 
@@ -116,7 +118,8 @@ def load_values(filename):
 
 #######                                                                            ######
 
-if __name__ == "__main__":
+def main():
+    global hsv
     cv2.namedWindow('controls')
 
     hsv = load_values('values.json')
@@ -145,7 +148,10 @@ if __name__ == "__main__":
     
 
     cam = cv2.VideoCapture(0)
-    while(True):
+    if cam is None or not cam.isOpened():
+        print("failed to open camera")
+        return
+    while(True):        
         img = capture(cam)
 
         hsv_low = np.array([hsv['low H'], hsv['low S'], hsv['low V']])
@@ -164,3 +170,8 @@ if __name__ == "__main__":
     cv2.destroyAllWindows()
     write_values('values.json', hsv)
 
+
+
+
+if __name__ == "__main__":
+    main()
