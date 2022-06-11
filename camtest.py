@@ -41,6 +41,8 @@ def capture(cam):
 
 def detect_circles(img, minRadius, maxRadius, minDist):
     output = img.copy()
+    x_gem = None
+    y_gem = None
     # image = cv2.cvtColor(output, cv2.COLOR_HSV2RGB)
     image = cv2.cvtColor(output, cv2.COLOR_BGR2GRAY)
     circles = cv2.HoughCircles(image=image, 
@@ -66,7 +68,7 @@ def detect_circles(img, minRadius, maxRadius, minDist):
         
         
         x_gem = int(sum_x/len(circles_round))
-        x_gem  = int(sum_y/len(circles_round))
+        y_gem  = int(sum_y/len(circles_round))
         
         cv2.circle(img,(x_gem , y_gem),2,(255,255,255),3)
 
@@ -159,7 +161,9 @@ if __name__ == "__main__":
         res = filter_img(img, hsv_low, hsv_high)
                 
         res, gem_loc = detect_circles(res, hsv['min Rad'], hsv['max Rad'], hsv['min Dist'])
-        conn.write(gem_loc)
+
+        if gem_loc is not None:
+            conn.write(gem_loc)
         cv2.imshow('original', img)
         cv2.imshow('res', res)
 
