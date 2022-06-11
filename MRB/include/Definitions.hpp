@@ -21,8 +21,8 @@ enum axis {
 };
 
 enum servoPins {
-    ONE = 7,
-    TWO = 8,
+    ONE = 5,
+    TWO = 6,
     THREE = 9,
 };
 #endif //DEFINITIONS_HPP

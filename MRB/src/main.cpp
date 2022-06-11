@@ -14,16 +14,16 @@ struct ServoStanden{
 
 
 void SerialFlush(){
-  while(SerialUSB.available()){
-    SerialUSB.read();
+  while(Serial.available()){
+    Serial.read();
   }
 }
 
 ServoStanden GetServoStandenFromSerial(){
   ServoStanden standen;
-  standen.servo1 = SerialUSB.parseInt();
-  // standen.servo2 = SerialUSB.parseInt();
-  // standen.servo3 = SerialUSB.parseInt();
+  standen.servo1 = Serial.parseInt();
+  standen.servo2 = Serial.parseInt();
+  standen.servo3 = Serial.parseInt();
   return standen;
 }
 
@@ -33,31 +33,37 @@ Servo s3;
 // BalanceSystem sys(s1, s2, s3, Ki, Kp, Kd);
 
 void setup() {
-  SerialUSB.begin(BAUDRATE);
-  pinMode(servoPins::ONE, OUTPUT);
-  pinMode(servoPins::TWO, OUTPUT);
-  pinMode(servoPins::THREE, OUTPUT);
+  Serial.begin(BAUDRATE);
+  // pinMode(servoPins::ONE, OUTPUT);
+  // pinMode(servoPins::TWO, OUTPUT);
+  // pinMode(servoPins::THREE, OUTPUT);
   
   s1.attach(servoPins::ONE);
   s2.attach(servoPins::TWO);
   s3.attach(servoPins::THREE);
+
 }
 
+int angle = 80;
 void loop() {
+  
   SerialFlush();
-  while(SerialUSB.available() == 0){}
+  while(Serial.available() == 0){}
   ServoStanden standen = GetServoStandenFromSerial();
 
   s1.write(standen.servo1);
+  delay(15);
   s2.write(standen.servo2);
+  delay(15);
   s3.write(standen.servo3);
+  delay(20);
 
-  SerialUSB.println("OK");
-  SerialUSB.print("S1: ");
-  SerialUSB.println(standen.servo1);
-  SerialUSB.print("S2: ");
-  SerialUSB.println(standen.servo2);
-  SerialUSB.print("S3: ");
-  SerialUSB.println(standen.servo3);
+  Serial.println("OK");
+  Serial.print("S1: ");
+  Serial.println(standen.servo1);
+  Serial.print("S2: ");
+  Serial.println(standen.servo2);
+  Serial.print("S3: ");
+  Serial.println(standen.servo3);
 
 }
