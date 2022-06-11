@@ -1,6 +1,7 @@
 import cv2
 import json
 import numpy as np
+import serial
 
 def callbackH(x):
     global hsv
@@ -40,6 +41,8 @@ def capture(cam):
 
 def detect_circles(img, minRadius, maxRadius, minDist):
     output = img.copy()
+    x_gem = None
+    y_gem = None
     # image = cv2.cvtColor(output, cv2.COLOR_HSV2RGB)
     image = cv2.cvtColor(output, cv2.COLOR_BGR2GRAY)
     circles = cv2.HoughCircles(image=image, 
@@ -117,9 +120,11 @@ def load_values(filename):
 #     cv2.createTrackbar(key, 'controls', value, hsv['high ' + key[-1]], eval(f'{key[-1]}'))
 
 #######                                                                            ######
-
-def main():
-    global hsv
+if __name__ == "__main__":
+    
+    conn = serial.Serial('COM14', 19200, timeout=1)
+    conn.flush()
+    
     cv2.namedWindow('controls')
 
     hsv = load_values('values.json')
@@ -147,11 +152,12 @@ def main():
     
     
 
-    cam = cv2.VideoCapture(0)
+    cam = cv2.VideoCapture(1)
     if cam is None or not cam.isOpened():
         print("failed to open camera")
         return
-    while(True):        
+      
+    while(True):
         img = capture(cam)
 
         hsv_low = np.array([hsv['low H'], hsv['low S'], hsv['low V']])
@@ -161,6 +167,8 @@ def main():
                 
         res, gem_loc = detect_circles(res, hsv['min Rad'], hsv['max Rad'], hsv['min Dist'])
 
+        if gem_loc != (None, None):
+            conn.write(gem_loc)
         cv2.imshow('original', img)
         cv2.imshow('res', res)
 
@@ -169,9 +177,4 @@ def main():
             break
     cv2.destroyAllWindows()
     write_values('values.json', hsv)
-
-
-
-
-if __name__ == "__main__":
-    main()
+    conn.close()
