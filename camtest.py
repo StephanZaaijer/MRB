@@ -121,8 +121,8 @@ def load_values(filename):
 
 if __name__ == "__main__":
     
-    conn = serial.Serial('/dev/ttyACM0', 9600, timeout=1)
-    conn.flush();
+    conn = serial.Serial('COM14', 19200, timeout=1)
+    conn.flush()
     
     cv2.namedWindow('controls')
 
@@ -151,7 +151,7 @@ if __name__ == "__main__":
     
     
 
-    cam = cv2.VideoCapture(0)
+    cam = cv2.VideoCapture(1)
     while(True):
         img = capture(cam)
 
@@ -162,7 +162,7 @@ if __name__ == "__main__":
                 
         res, gem_loc = detect_circles(res, hsv['min Rad'], hsv['max Rad'], hsv['min Dist'])
 
-        if gem_loc is not None:
+        if gem_loc != (None, None):
             conn.write(gem_loc)
         cv2.imshow('original', img)
         cv2.imshow('res', res)
@@ -172,4 +172,5 @@ if __name__ == "__main__":
             break
     cv2.destroyAllWindows()
     write_values('values.json', hsv)
+    conn.close()
 
