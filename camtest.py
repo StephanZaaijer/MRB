@@ -54,6 +54,8 @@ def detect_circles(img, minRadius, maxRadius, minDist):
                            minRadius=minRadius,
                            maxRadius=maxRadius                           
                           )
+    x_gem = None
+    y_gem = None
     if circles is not None:
         sum_x=0
         sum_y=0
@@ -118,7 +120,6 @@ def load_values(filename):
 #     cv2.createTrackbar(key, 'controls', value, hsv['high ' + key[-1]], eval(f'{key[-1]}'))
 
 #######                                                                            ######
-
 if __name__ == "__main__":
     
     conn = serial.Serial('COM14', 19200, timeout=1)
@@ -152,6 +153,10 @@ if __name__ == "__main__":
     
 
     cam = cv2.VideoCapture(1)
+    if cam is None or not cam.isOpened():
+        print("failed to open camera")
+        return
+      
     while(True):
         img = capture(cam)
 
@@ -173,4 +178,3 @@ if __name__ == "__main__":
     cv2.destroyAllWindows()
     write_values('values.json', hsv)
     conn.close()
-
