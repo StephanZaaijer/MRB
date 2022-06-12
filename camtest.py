@@ -260,9 +260,23 @@ if __name__ == "__main__":
 
         k = cv2.waitKey(1)
         if k == 27:
+            cv2.destroyAllWindows()
+            write_values('values.json', hsv)
+
+            samplesX = []
+            samplesY = []
+            for i in range(60):
+                res = filter_img(img, hsv_low, hsv_high)
+                res, gem_loc = detect_circles(res, hsv_mid['min Rad'], hsv_mid['max Rad'], hsv_mid['min Dist'], hsv_mid['dp'], hsv_mid['param1'], hsv_mid['param2'])
+                samplesX.append(gem_loc[0])
+                samplesY.append(gem_loc[1])
+
+            x = np.median(samplesX)
+            y = np.median(samplesY)
+            print(f"coordinate: ({x}, {y})")
+            system.setMidpoint(Coordinate(x, y))
             break
-    cv2.destroyAllWindows()
-    write_values('values.json', hsv)
+            
 
 
     # track ball location
