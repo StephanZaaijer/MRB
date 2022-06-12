@@ -155,7 +155,7 @@ if __name__ == "__main__":
     cam = cv2.VideoCapture(1)
     if cam is None or not cam.isOpened():
         print("failed to open camera")
-        return
+        quit()
       
     while(True):
         img = capture(cam)
