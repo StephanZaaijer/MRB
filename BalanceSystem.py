@@ -1,4 +1,7 @@
 import enum
+from tkinter.tix import MAX
+MAX_SERVO_CORRECTION = 30
+
 class Coordinate:
     # Constructor
     def __init__(self, x, y):
@@ -19,6 +22,9 @@ class Coordinate:
     def setCoordinate(self, x, y):
         self.x = x
         self.y = y
+
+    def __sub__(self, other):
+        return Coordinate(self.x - other.x, self.y - other.y)
     # String representation
     def __str__(self):
         return "(" + str(self.x) + ", " + str(self.y) + ")"
@@ -67,16 +73,23 @@ class BalanceSystem:
         self.Yintegral = 0
         self.Ylast_error = 0
         self.Yerror = 0
-        self.last_time = 0
-        self.time = 0
         self.setPoint = Coordinate(0, 0)
         self.midpoint = Coordinate(0, 0)
+
+    def clearVariables(self):
+        self.Xintegral = 0
+        self.Xlast_error = 0
+        self.Yintegral = 0
+        self.Ylast_error = 0
+        self.Yerror = 0
     
     def setSetpoint(self, x, y):
         self.setPoint.setCoordinate(x, y)
+        self.clearVariables()
 
     def setSetpoint(self, location: Coordinate):
         self.setPoint = location
+        self.clearVariables()
 
     def setMidpoint(self, x, y):
         self.midpoint.setCoordinate(x, y)
@@ -84,29 +97,40 @@ class BalanceSystem:
     def setMidpoint(self, location: Coordinate):
         self.midpoint = location
 
+    def calculateAction(self, error, axis: Axis, dt):
+        if axis == Axis.x:
+            error_div = (error - self.Xlast_error)/dt
+            self.Xintegral += (error*dt)
+            self.Xlast_error = error
+            return self.Kp * error + self.Ki * self.Xintegral + self.Kd * error_div
+        elif axis == Axis.y:
+            error_div = (error - self.Ylast_error)/dt
+            self.Yintegral += (error*dt)
+            self.Ylast_error = error
+            return self.Kp * error + self.Ki * self.Yintegral + self.Kd * error_div
+        else:
+            return 0
+
     def PID(self, ballLocation: Coordinate, dt):
-        def calculateAction(self, error, axis: Axis, dt):
-            if axis == Axis.x:
-                error_div = (error - self.Xlast_error)/dt
-                self.Xintegral += (error*dt)
-                self.Xlast_error = error
-                return self.Kp * error + self.Ki * self.Xintegral + self.Kd * error_div
-            elif axis == Axis.y:
-                error_div = (error - self.Ylast_error)/dt
-                self.Yintegral += (error*dt)
-                self.Ylast_error = error
-                return self.Kp * error + self.Ki * self.Yintegral + self.Kd * error_div
-            else:
-                return 0
         error = self.setPoint - ballLocation
-        angle_percentageX = calculateAction(abs(error.getX()), Axis.x, dt)
-        angle_percentageY = calculateAction(abs(error.getY()), Axis.y, dt)
-        angleX = angle_percentageX * (180/100)
-        angleY = angle_percentageY * (180/100)
-        return (angleX, angleY)
+        angle_percentageX = self.calculateAction(abs(error.getX()), Axis.x, dt)
+        angle_percentageY = self.calculateAction(abs(error.getY()), Axis.y, dt)
+        angleX = int(angle_percentageX * (MAX_SERVO_CORRECTION/100))
+        angleY = int(angle_percentageY * (MAX_SERVO_CORRECTION/100))
+
+        if error.getX() < 0 and error.getY() < 0:
+            return True, Coordinate(-angleX, -angleY)
+        elif error.getX() < 0 and error.getY() > 0:
+            return True, Coordinate(-angleX, angleY)
+        elif error.getX() > 0 and error.getY() < 0:
+            return True, Coordinate(angleX, -angleY)
+        elif error.getX() > 0 and error.getY() > 0:  
+            return True, Coordinate(angleX, angleY)
+        else:
+            return False, Coordinate(None, None)
 
 if __name__ == "__main__":
     test = BalanceSystem(1, 1, 1)
-    print(test.calculateAction(1, Axis.x, 1));
+    print(test.calculateAction(1, Axis.x, 1))
 
     exit(1)

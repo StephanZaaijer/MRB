@@ -36,12 +36,20 @@ void setup() {
   s2.attach(servoPins::TWO);
   s3.attach(servoPins::THREE);
 
+  s1.write(120);
+  s2.write(120);
+  s3.write(120);
+
 }
 
-int angle = 80;
 void loop() {
   
   SerialFlush();
+
+  // start handshake
+  Serial.print('S');
+
+  // wait for reply
   while(Serial.available() == 0){}
   ServoStanden standen = GetServoStandenFromSerial();
 
