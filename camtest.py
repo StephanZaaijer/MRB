@@ -1,3 +1,4 @@
+from re import A
 from venv import create
 import cv2
 import json
@@ -9,6 +10,7 @@ from BalanceSystem import BalanceSystem, Coordinate
 
 # global variables
 SERVO_MID_ANGLE = 130
+CLICK_SETTING = ""
 
 
 maxH = 255
@@ -88,12 +90,30 @@ def callbackparam2(hsv_setting : HSV):
     else:
         hsv[hsv_setting.get_filter()]['param2'] = tmp
 
+def callbackP(x):
+    global system
+    system.setP(x)
+
+def callbackI(x):
+    global system
+    system.setI(x)
+
+def callbackD(x):
+    global system
+    system.setD(x)
 
 
-# def click_event(event, x, y, flags, params):
- 
-#     # checking for left mouse clicks
-#     if event == cv2.EVENT_LBUTTONDOWN:
+
+def click_event(event, x, y, flags, params):
+    global system
+    # checking for left mouse clicks
+    if event == cv2.EVENT_LBUTTONDOWN:
+        print(f"{x}, {y}")
+        if CLICK_SETTING == "servo":
+            system.setServoCoordinate(Coordinate(x, y))
+        elif CLICK_SETTING == "setpoint":
+            system.setSetpoint(Coordinate(x, y))
+
 
 
 def capture(cam):
@@ -135,9 +155,7 @@ def detect_circles(img, minRadius, maxRadius, minDist, dp, param1, param2):
         
         cv2.circle(img,(x_gem , y_gem),2,(255,255,255),3)
 
-
-
-    return img, (x_gem , y_gem )
+    return img, (x_gem , y_gem ), 
 
 def filter_img(frame, low_tresh, high_tresh):
     # median filter to remove salt&pepper
@@ -154,38 +172,6 @@ def write_values(filename, values):
     with open(f'{filename}', 'w') as outfile:
         js = json.dumps(values, indent=4)
         outfile.write(js)
-
-def sendDataToServos(conn, gem_loc, angle_correction):
-    # get error correcitons
-    x = angle_correction.getX()
-    y = angle_correction.getY()
-
-    # store x servo state because it has to remain the same when changing y
-    x_servo_state = int()
-
-    # wait for handshake
-    while conn.read() != B'S': {}
-
-    # write x error correction to serial
-    if x >= 0:
-        x_servo_state = SERVO_MID_ANGLE + x
-
-        conn.write(f"{SERVO_MID_ANGLE-x} {SERVO_MID_ANGLE-x} {SERVO_MID_ANGLE+x}".encode('utf-8'))
-    elif x < 0:
-        x_servo_state = SERVO_MID_ANGLE - x
-        conn.write(f"{SERVO_MID_ANGLE+x} {SERVO_MID_ANGLE+x} {SERVO_MID_ANGLE-x}".encode('utf-8'))
-    
-    # wait for handshake
-    while conn.read() != B'S': {}
-
-    # write y error correction to serial
-    # keep x servo state the same
-    if y >= 0:
-        conn.write(f"{SERVO_MID_ANGLE-y} {SERVO_MID_ANGLE+y} {x_servo_state}".encode('utf-8'))
-    elif y < 0:
-        conn.write(f"{SERVO_MID_ANGLE+y} {SERVO_MID_ANGLE-y} {x_servo_state} ".encode('utf-8'))
-
-    return True
 
 def load_values(filename):
     try:
@@ -219,6 +205,10 @@ def create_controls(hsv, hsv_setting : HSV):
     cv2.createTrackbar('param1','controls',hsv[hsv_setting.get_filter()]['param1'], maxparam1, lambda x: callbackparam1(hsv_setting))
     cv2.createTrackbar('param2','controls',hsv[hsv_setting.get_filter()]['param2'], maxparam2, lambda x: callbackparam2(hsv_setting))
 
+    cv2.createTrackbar('p','controls',0, 30, callbackP)
+    cv2.createTrackbar('i','controls',0, 30, callbackI)
+    cv2.createTrackbar('d','controls',0, 30, callbackD)
+
 ####### this code is an alternative for the lines beneath, but its not very robust ######
 # cv2.namedWindow('controls')
 
@@ -226,11 +216,13 @@ def create_controls(hsv, hsv_setting : HSV):
 #     cv2.createTrackbar(key, 'controls', value, hsv['high ' + key[-1]], eval(f'{key[-1]}'))
 
 #######                                                                            ######
+system = BalanceSystem(0.1, 0, 0)
+
+
 if __name__ == "__main__":
-    system = BalanceSystem(0.1, 0.1, 0.1)
     # cv2.setMouseCallback('image', click_event)
     
-    conn = serial.Serial('COM14', 19200, timeout=1)
+    conn = serial.Serial('COM14', 115200, timeout=1)
 
     hsv = load_values('values.json')
     
@@ -242,8 +234,13 @@ if __name__ == "__main__":
 
     # determine midpoint of plane
     cv2.namedWindow('controls', cv2.WINDOW_NORMAL)
+    cv2.namedWindow('MIDPOINT FILTER')
+
+    cv2.setMouseCallback('MIDPOINT FILTER', click_event)
     create_controls(hsv, HSV(FILTER.MIDPOINT))
     while(True):
+        CLICK_SETTING = "servo"
+
         t = time.perf_counter()
         img = capture(cam)
 
@@ -274,19 +271,23 @@ if __name__ == "__main__":
 
             x = np.median(samplesX)
             y = np.median(samplesY)
-            # print(f"coordinate: ({x}, {y})")
             system.setMidpoint(Coordinate(x, y))
 
-            # Set setpoint to midpoint <THIS HAS TO BE CHANGED TO A CLICK EVENT> BUT THATS NOT IMPLEMENTED YET
+            # Set setpoint to midpoint as default
+            print(f"setpoint: ({x}, {y})")
             system.setSetpoint(Coordinate(x, y))
             break
             
-
     # track ball location
     cv2.namedWindow('controls', cv2.WINDOW_NORMAL)
+    cv2.namedWindow('BALL FILTER')
+    cv2.setMouseCallback('BALL FILTER', click_event)
+
     create_controls(hsv, HSV(FILTER.BALL))
+    t = time.perf_counter()
+    # counter = 1
     while(True):
-        t = time.perf_counter()
+        CLICK_SETTING = "ball"
         img = capture(cam)
 
         hsv_ball = hsv['ball_filter']
@@ -300,12 +301,25 @@ if __name__ == "__main__":
 
         if gem_loc != (None, None):
             # print(gem_loc)
+            
+            # write corrections to serial
+            while conn.read() != B'S': {}
+
             new_t = time.perf_counter()
             dt = new_t - t
-            check, angle_correction = system.PID(Coordinate(gem_loc[0], gem_loc[1]), dt)
-            # write corrections to serial
-            if check:
-                sendDataToServos(conn, gem_loc, angle_correction)
+            # print(dt)
+            angle_correction = system.PID(Coordinate(gem_loc[0], gem_loc[1]), dt)
+            print(f"angle correction: {angle_correction}")
+            # print("sending")
+            if angle_correction != None:
+                conn.write(f"{angle_correction[0]} ".encode('utf-8'))
+                conn.write(f"{angle_correction[1]} ".encode('utf-8'))
+                conn.write(f"{angle_correction[2]} ".encode('utf-8'))
+                conn.write('\n'.encode('utf-8'))
+                # counter += 1
+                t = time.perf_counter()
+                # time.sleep(1/60)
+        # print(counter)
 
         cv2.imshow('original', img)
         cv2.imshow('BALL FILTER', res)
