@@ -1,6 +1,6 @@
 import enum
 from tkinter.tix import MAX
-MAX_SERVO_CORRECTION = 30
+MAX_SERVO_CORRECTION = 10
 
 class Coordinate:
     # Constructor
@@ -73,8 +73,8 @@ class BalanceSystem:
         self.Yintegral = 0
         self.Ylast_error = 0
         self.Yerror = 0
-        self.setPoint = Coordinate(0, 0)
         self.midpoint = Coordinate(0, 0)
+        self.setPoint = Coordinate(0, 0)
 
     def clearVariables(self):
         self.Xintegral = 0
@@ -115,8 +115,12 @@ class BalanceSystem:
         error = self.setPoint - ballLocation
         angle_percentageX = self.calculateAction(abs(error.getX()), Axis.x, dt)
         angle_percentageY = self.calculateAction(abs(error.getY()), Axis.y, dt)
-        angleX = int(angle_percentageX * (MAX_SERVO_CORRECTION/100))
-        angleY = int(angle_percentageY * (MAX_SERVO_CORRECTION/100))
+
+        percetangeX = angle_percentageX if angle_percentageX <= 100 else 100
+        percentageY = angle_percentageY if angle_percentageY <= 100 else 100
+        angleX = int(percetangeX * (MAX_SERVO_CORRECTION/100))
+        angleY = int(percentageY * (MAX_SERVO_CORRECTION/100))
+    
 
         if error.getX() < 0 and error.getY() < 0:
             return True, Coordinate(-angleX, -angleY)
@@ -131,6 +135,6 @@ class BalanceSystem:
 
 if __name__ == "__main__":
     test = BalanceSystem(1, 1, 1)
-    print(test.calculateAction(1, Axis.x, 1))
+    print(test.calculateAction(50, Axis.x, 0.5))
 
     exit(1)

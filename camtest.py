@@ -8,7 +8,8 @@ import numpy as np
 from BalanceSystem import BalanceSystem, Coordinate
 
 # global variables
-SERVO_MID_ANGLE = 120
+SERVO_MID_ANGLE = 130
+
 
 maxH = 255
 maxS = 255
@@ -155,9 +156,6 @@ def write_values(filename, values):
         outfile.write(js)
 
 def sendDataToServos(conn, gem_loc, angle_correction):
-    # wait for handshake
-    while conn.read() != 'S': {}
-
     # get error correcitons
     x = angle_correction.getX()
     y = angle_correction.getY()
@@ -165,23 +163,27 @@ def sendDataToServos(conn, gem_loc, angle_correction):
     # store x servo state because it has to remain the same when changing y
     x_servo_state = int()
 
+    # wait for handshake
+    while conn.read() != B'S': {}
+
     # write x error correction to serial
     if x >= 0:
-        x_servo_state = 120 + x
-        conn.write(f"{120-x} {120+x} {120-x}")
+        x_servo_state = SERVO_MID_ANGLE + x
+
+        conn.write(f"{SERVO_MID_ANGLE-x} {SERVO_MID_ANGLE-x} {SERVO_MID_ANGLE+x}".encode('utf-8'))
     elif x < 0:
-        x_servo_state = 120 - x
-        conn.write(f"{120+x} {120-x} {120+x}")
+        x_servo_state = SERVO_MID_ANGLE - x
+        conn.write(f"{SERVO_MID_ANGLE+x} {SERVO_MID_ANGLE+x} {SERVO_MID_ANGLE-x}".encode('utf-8'))
     
     # wait for handshake
-    while conn.read() != 'S': {}
+    while conn.read() != B'S': {}
 
     # write y error correction to serial
     # keep x servo state the same
     if y >= 0:
-        conn.write(f"{120-y} {x_servo_state} {120+y}")
+        conn.write(f"{SERVO_MID_ANGLE-y} {SERVO_MID_ANGLE+y} {x_servo_state}".encode('utf-8'))
     elif y < 0:
-        conn.write(f"{120+y} {x_servo_state} {120-y}")
+        conn.write(f"{SERVO_MID_ANGLE+y} {SERVO_MID_ANGLE-y} {x_servo_state} ".encode('utf-8'))
 
     return True
 
@@ -226,11 +228,10 @@ def create_controls(hsv, hsv_setting : HSV):
 #######                                                                            ######
 if __name__ == "__main__":
     system = BalanceSystem(0.1, 0.1, 0.1)
-    
     # cv2.setMouseCallback('image', click_event)
     
-    # conn = serial.Serial('COM14', 19200, timeout=1)
-    # conn.flush()
+    conn = serial.Serial('COM14', 19200, timeout=1)
+
     hsv = load_values('values.json')
     
     dt = float('-inf')
@@ -273,11 +274,13 @@ if __name__ == "__main__":
 
             x = np.median(samplesX)
             y = np.median(samplesY)
-            print(f"coordinate: ({x}, {y})")
+            # print(f"coordinate: ({x}, {y})")
             system.setMidpoint(Coordinate(x, y))
+
+            # Set setpoint to midpoint <THIS HAS TO BE CHANGED TO A CLICK EVENT> BUT THATS NOT IMPLEMENTED YET
+            system.setSetpoint(Coordinate(x, y))
             break
             
-
 
     # track ball location
     cv2.namedWindow('controls', cv2.WINDOW_NORMAL)
@@ -295,16 +298,14 @@ if __name__ == "__main__":
                 
         res, gem_loc = detect_circles(res, hsv_ball['min Rad'], hsv_ball['max Rad'], hsv_ball['min Dist'], hsv_ball['dp'], hsv_ball['param1'], hsv_ball['param2'])
 
-        # if gem_loc != (None, None):
-        #     print(gem_loc)
-        #     new_t = time.perf_counter()
-        #     dt = new_t - t
-        #     check, angle_correction = system.PID(Coordinate(gem_loc[0], gem_loc[1]), dt)
-
-        #     # write corrections to serial
-        #     if check:
-        #         print(gem_loc)
-        #         sendDataToServos(conn, gem_loc, angle_correction)
+        if gem_loc != (None, None):
+            # print(gem_loc)
+            new_t = time.perf_counter()
+            dt = new_t - t
+            check, angle_correction = system.PID(Coordinate(gem_loc[0], gem_loc[1]), dt)
+            # write corrections to serial
+            if check:
+                sendDataToServos(conn, gem_loc, angle_correction)
 
         cv2.imshow('original', img)
         cv2.imshow('BALL FILTER', res)
@@ -314,4 +315,4 @@ if __name__ == "__main__":
             break
     cv2.destroyAllWindows()
     write_values('values.json', hsv)
-    # conn.close()
+    conn.close()

@@ -36,18 +36,17 @@ void setup() {
   s2.attach(servoPins::TWO);
   s3.attach(servoPins::THREE);
 
-  s1.write(120);
-  s2.write(120);
-  s3.write(120);
+  s1.write(130);
+  s2.write(130);
+  s3.write(130);
 
 }
 
 void loop() {
-  
   SerialFlush();
 
   // start handshake
-  Serial.print('S');
+  Serial.println('S');
 
   // wait for reply
   while(Serial.available() == 0){}
@@ -58,7 +57,7 @@ void loop() {
   s2.write(standen.servo2);
   delay(15);
   s3.write(standen.servo3);
-  delay(20);
+  delay(15);
 
   Serial.println("OK");
   Serial.print("S1: ");

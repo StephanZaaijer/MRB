@@ -1,8 +1,8 @@
 {
     "ball_filter": {
         "low H": 59,
-        "high H": 94,
-        "low S": 62,
+        "high H": 85,
+        "low S": 108,
         "high S": 255,
         "low V": 0,
         "high V": 255,
@@ -15,16 +15,16 @@
     },
     "midpoint_filter": {
         "low H": 0,
-        "high H": 16,
-        "low S": 127,
+        "high H": 17,
+        "low S": 111,
         "high S": 255,
-        "low V": 114,
+        "low V": 101,
         "high V": 255,
         "min Rad": 0,
         "max Rad": 7,
         "min Dist": 190,
-        "dp": 33,
+        "dp": 5,
         "param1": 50,
-        "param2": 4
+        "param2": 5
     }
 }
