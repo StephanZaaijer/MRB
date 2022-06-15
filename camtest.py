@@ -208,20 +208,23 @@ def create_controls(hsv, hsv_setting : HSV):
     cv2.createTrackbar('p','controls',0, 30, callbackP)
     cv2.createTrackbar('i','controls',0, 30, callbackI)
     cv2.createTrackbar('d','controls',0, 30, callbackD)
-
-####### this code is an alternative for the lines beneath, but its not very robust ######
-# cv2.namedWindow('controls')
-
-# for key, value in hsv.items():
-#     cv2.createTrackbar(key, 'controls', value, hsv['high ' + key[-1]], eval(f'{key[-1]}'))
-
-#######                                                                            ######
-system = BalanceSystem(0.1, 0, 0)
+    
+system = BalanceSystem(0.5, 0, 0)
 
 
 if __name__ == "__main__":
-    # cv2.setMouseCallback('image', click_event)
-    
+
+    # mid = Coordinate(300, 300)
+    # s1, s2, s3 = Coordinate(1, 0), Coordinate(1, 600), Coordinate(900, 300) 
+    # system.setServoCoordinate(s1)
+    # system.setServoCoordinate(s2)
+    # system.setServoCoordinate(s3)
+
+    # system.setMidpoint(mid)
+    # system.setSetpoint(mid)
+    # angle_correction = system.PID(Coordinate(1,600), 0.03)
+    # print(angle_correction)
+
     conn = serial.Serial('COM14', 115200, timeout=1)
 
     hsv = load_values('values.json')
