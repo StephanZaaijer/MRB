@@ -209,127 +209,127 @@ def create_controls(hsv, hsv_setting : HSV):
     cv2.createTrackbar('i','controls',0, 30, callbackI)
     cv2.createTrackbar('d','controls',0, 30, callbackD)
     
-system = BalanceSystem(0.5, 0, 0)
 
 
 if __name__ == "__main__":
+    mid = Coordinate(300, 300)
+    system = BalanceSystem(0.5, 0, 0)  # default setpoint is equal to midpoint
 
-    # mid = Coordinate(300, 300)
-    # s1, s2, s3 = Coordinate(1, 0), Coordinate(1, 600), Coordinate(900, 300) 
-    # system.setServoCoordinate(s1)
-    # system.setServoCoordinate(s2)
-    # system.setServoCoordinate(s3)
+    s1, s2, s3 = Coordinate(1, 0), Coordinate(1, 600), Coordinate(900, 300) 
+    system.setServoCoordinate(s1)
+    system.setServoCoordinate(s2)
+    system.setServoCoordinate(s3)
+    system.setMidpoint(mid)
 
-    # system.setMidpoint(mid)
-    # system.setSetpoint(mid)
-    # angle_correction = system.PID(Coordinate(1,600), 0.03)
-    # print(angle_correction)
+    angle_correction = system.PID(Coordinate(1, 600), 0.03)
+    print(angle_correction)
 
-    conn = serial.Serial('COM14', 115200, timeout=1)
+    # conn = serial.Serial('COM14', 115200, timeout=1)
 
-    hsv = load_values('values.json')
+    # hsv = load_values('values.json')
     
-    dt = float('-inf')
-    cam = cv2.VideoCapture(1)
-    if cam is None or not cam.isOpened():
-        print("failed to open camera")
-        quit()
+    # dt = float('-inf')
+    # cam = cv2.VideoCapture(1)
+    # if cam is None or not cam.isOpened():
+    #     print("failed to open camera")
+    #     quit()
 
-    # determine midpoint of plane
-    cv2.namedWindow('controls', cv2.WINDOW_NORMAL)
-    cv2.namedWindow('MIDPOINT FILTER')
+    # # determine midpoint of plane
+    # cv2.namedWindow('controls', cv2.WINDOW_NORMAL)
+    # cv2.namedWindow('MIDPOINT FILTER')
 
-    cv2.setMouseCallback('MIDPOINT FILTER', click_event)
-    create_controls(hsv, HSV(FILTER.MIDPOINT))
-    while(True):
-        CLICK_SETTING = "servo"
+    # cv2.setMouseCallback('MIDPOINT FILTER', click_event)
+    # create_controls(hsv, HSV(FILTER.MIDPOINT))
+    # while(True):
+    #     CLICK_SETTING = "servo"
 
-        t = time.perf_counter()
-        img = capture(cam)
+    #     t = time.perf_counter()
+    #     img = capture(cam)
 
-        hsv_mid = hsv['midpoint_filter']
+    #     hsv_mid = hsv['midpoint_filter']
 
-        hsv_low = np.array([hsv_mid['low H'], hsv_mid['low S'], hsv_mid['low V']])
-        hsv_high = np.array([hsv_mid['high H'], hsv_mid['high S'], hsv_mid['high V']])
+    #     hsv_low = np.array([hsv_mid['low H'], hsv_mid['low S'], hsv_mid['low V']])
+    #     hsv_high = np.array([hsv_mid['high H'], hsv_mid['high S'], hsv_mid['high V']])
 
-        res = filter_img(img, hsv_low, hsv_high)
+    #     res = filter_img(img, hsv_low, hsv_high)
                 
-        res, gem_loc = detect_circles(res, hsv_mid['min Rad'], hsv_mid['max Rad'], hsv_mid['min Dist'], hsv_mid['dp'], hsv_mid['param1'], hsv_mid['param2'])
+    #     res, gem_loc = detect_circles(res, hsv_mid['min Rad'], hsv_mid['max Rad'], hsv_mid['min Dist'], hsv_mid['dp'], hsv_mid['param1'], hsv_mid['param2'])
 
-        cv2.imshow('original', img)
-        cv2.imshow('MIDPOINT FILTER', res)
+    #     cv2.imshow('original', img)
+    #     cv2.imshow('MIDPOINT FILTER', res)
 
-        k = cv2.waitKey(1)
-        if k == 27:
-            cv2.destroyAllWindows()
-            write_values('values.json', hsv)
+    #     k = cv2.waitKey(1)
+    #     if k == 27:
+    #         cv2.destroyAllWindows()
+    #         write_values('values.json', hsv)
 
-            samplesX = []
-            samplesY = []
-            for i in range(60):
-                res = filter_img(img, hsv_low, hsv_high)
-                res, gem_loc = detect_circles(res, hsv_mid['min Rad'], hsv_mid['max Rad'], hsv_mid['min Dist'], hsv_mid['dp'], hsv_mid['param1'], hsv_mid['param2'])
-                samplesX.append(gem_loc[0])
-                samplesY.append(gem_loc[1])
+    #         samplesX = []
+    #         samplesY = []
+    #         for i in range(60):
+    #             res = filter_img(img, hsv_low, hsv_high)
+    #             res, gem_loc = detect_circles(res, hsv_mid['min Rad'], hsv_mid['max Rad'], hsv_mid['min Dist'], hsv_mid['dp'], hsv_mid['param1'], hsv_mid['param2'])
+    #             samplesX.append(gem_loc[0])
+    #             samplesY.append(gem_loc[1])
 
-            x = np.median(samplesX)
-            y = np.median(samplesY)
-            system.setMidpoint(Coordinate(x, y))
+    #         x = np.median(samplesX)
+    #         y = np.median(samplesY)
+    #         system.setMidpoint(Coordinate(x, y))
 
-            # Set setpoint to midpoint as default
-            print(f"setpoint: ({x}, {y})")
-            system.setSetpoint(Coordinate(x, y))
-            break
+    #         # Set setpoint to midpoint as default
+    #         print(f"setpoint: ({x}, {y})")
+    #         system.setSetpoint(Coordinate(x, y))
+    #
+    #         break
             
-    # track ball location
-    cv2.namedWindow('controls', cv2.WINDOW_NORMAL)
-    cv2.namedWindow('BALL FILTER')
-    cv2.setMouseCallback('BALL FILTER', click_event)
+    # # track ball location
+    # cv2.namedWindow('controls', cv2.WINDOW_NORMAL)
+    # cv2.namedWindow('BALL FILTER')
+    # cv2.setMouseCallback('BALL FILTER', click_event)
 
-    create_controls(hsv, HSV(FILTER.BALL))
-    t = time.perf_counter()
-    # counter = 1
-    while(True):
-        CLICK_SETTING = "ball"
-        img = capture(cam)
+    # create_controls(hsv, HSV(FILTER.BALL))
+    # t = time.perf_counter()
+    # # counter = 1
+    # while(True):
+    #     CLICK_SETTING = "ball"
+    #     img = capture(cam)
 
-        hsv_ball = hsv['ball_filter']
+    #     hsv_ball = hsv['ball_filter']
 
-        hsv_low = np.array([hsv_ball['low H'], hsv_ball['low S'], hsv_ball['low V']])
-        hsv_high = np.array([hsv_ball['high H'], hsv_ball['high S'], hsv_ball['high V']])
+    #     hsv_low = np.array([hsv_ball['low H'], hsv_ball['low S'], hsv_ball['low V']])
+    #     hsv_high = np.array([hsv_ball['high H'], hsv_ball['high S'], hsv_ball['high V']])
 
-        res = filter_img(img, hsv_low, hsv_high)
+    #     res = filter_img(img, hsv_low, hsv_high)
                 
-        res, gem_loc = detect_circles(res, hsv_ball['min Rad'], hsv_ball['max Rad'], hsv_ball['min Dist'], hsv_ball['dp'], hsv_ball['param1'], hsv_ball['param2'])
+    #     res, gem_loc = detect_circles(res, hsv_ball['min Rad'], hsv_ball['max Rad'], hsv_ball['min Dist'], hsv_ball['dp'], hsv_ball['param1'], hsv_ball['param2'])
 
-        if gem_loc != (None, None):
-            # print(gem_loc)
+    #     if gem_loc != (None, None):
+    #         # print(gem_loc)
             
-            # write corrections to serial
-            while conn.read() != B'S': {}
+    #         # write corrections to serial
+    #         while conn.read() != B'S': {}
 
-            new_t = time.perf_counter()
-            dt = new_t - t
-            # print(dt)
-            angle_correction = system.PID(Coordinate(gem_loc[0], gem_loc[1]), dt)
-            print(f"angle correction: {angle_correction}")
-            # print("sending")
-            if angle_correction != None:
-                conn.write(f"{angle_correction[0]} ".encode('utf-8'))
-                conn.write(f"{angle_correction[1]} ".encode('utf-8'))
-                conn.write(f"{angle_correction[2]} ".encode('utf-8'))
-                conn.write('\n'.encode('utf-8'))
-                # counter += 1
-                t = time.perf_counter()
-                # time.sleep(1/60)
-        # print(counter)
+    #         new_t = time.perf_counter()
+    #         dt = new_t - t
+    #         # print(dt)
+    #         angle_correction = system.PID(Coordinate(gem_loc[0], gem_loc[1]), dt)
+    #         print(f"angle correction: {angle_correction}")
+    #         # print("sending")
+    #         if angle_correction != None:
+    #             conn.write(f"{angle_correction[0]} ".encode('utf-8'))
+    #             conn.write(f"{angle_correction[1]} ".encode('utf-8'))
+    #             conn.write(f"{angle_correction[2]} ".encode('utf-8'))
+    #             conn.write('\n'.encode('utf-8'))
+    #             # counter += 1
+    #             t = time.perf_counter()
+    #             # time.sleep(1/60)
+    #     # print(counter)
 
-        cv2.imshow('original', img)
-        cv2.imshow('BALL FILTER', res)
+    #     cv2.imshow('original', img)
+    #     cv2.imshow('BALL FILTER', res)
 
-        k = cv2.waitKey(1)
-        if k == 27:
-            break
-    cv2.destroyAllWindows()
-    write_values('values.json', hsv)
-    conn.close()
+    #     k = cv2.waitKey(1)
+    #     if k == 27:
+    #         break
+    # cv2.destroyAllWindows()
+    # write_values('values.json', hsv)
+    # conn.close()

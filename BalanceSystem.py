@@ -86,8 +86,8 @@ class BalanceSystem:
         self.last_errorS2 = 0
         self.last_errorS3 = 0
 
-        self.setPoint = Coordinate(0, 0)
-        self.midpoint = Coordinate(0, 0)
+        self.setPoint: Coordinate = Coordinate(0, 0)
+        self.midpoint: Coordinate = Coordinate(0, 0)
 
         self.servoCoords: Coordinate = []
 
@@ -105,10 +105,14 @@ class BalanceSystem:
         # print("coordinateS1: " + str(self.coordinateS1.getX()), str(self.coordinateS1.getY()))
         # print("coordinateS2: " + str(self.coordinateS2.getX()), str(self.coordinateS2.getY()))
         # print("coordinateS3: " + str(self.coordinateS3.getX()), str(self.coordinateS3.getY()))
+        
         temp.S1 = (((self.setPoint.getX() - self.coordinateS1.getX()) * self.richtingS1.getX()) + ((self.setPoint.getY() - self.coordinateS1.getY()) * self.richtingS1.getY())) - (((ballLocation.getX() - self.coordinateS1.getX()) * self.richtingS1.getX()) + ((ballLocation.getY() - self.coordinateS1.getY()) * self.richtingS1.getY())) 
         temp.S2 = (((self.setPoint.getX() - self.coordinateS2.getX()) * self.richtingS2.getX()) + ((self.setPoint.getY() - self.coordinateS2.getY()) * self.richtingS2.getY())) - (((ballLocation.getX() - self.coordinateS2.getX()) * self.richtingS2.getX()) + ((ballLocation.getY() - self.coordinateS2.getY()) * self.richtingS2.getY())) 
         temp.S3 = (((self.setPoint.getX() - self.coordinateS3.getX()) * self.richtingS3.getX()) + ((self.setPoint.getY() - self.coordinateS3.getY()) * self.richtingS3.getY())) - (((ballLocation.getX() - self.coordinateS3.getX()) * self.richtingS3.getX()) + ((ballLocation.getY() - self.coordinateS3.getY()) * self.richtingS3.getY())) 
-
+        #print riching
+        print("richtingS1: " + str(self.richtingS1.getX()), str(self.richtingS1.getY()))
+        print("richtingS2: " + str(self.richtingS2.getX()), str(self.richtingS2.getY()))
+        print("richtingS3: " + str(self.richtingS3.getX()), str(self.richtingS3.getY()))
         # print(temp.S1, temp.S2, temp.S3)
         return temp
 
@@ -123,16 +127,17 @@ class BalanceSystem:
     
     def setServoCoordinate(self, servo_loc: Coordinate):
         l = len(self.servoCoords)
-        if l < 2:
+        if l < 3:
             self.servoCoords.append(servo_loc)
-        elif l == 2:
-            self.servoCoords.append(servo_loc)
-            self.setServoData(self.servoCoords)
 
-    def setServoData(self, lst_servo_coordinates):
+    def calculateServoData(self, lst_servo_coordinates):
         self.coordinateS1: Coordinate = lst_servo_coordinates[0]
         self.coordinateS2: Coordinate = lst_servo_coordinates[1]
         self.coordinateS3: Coordinate = lst_servo_coordinates[2]
+        print("coordinateS1: " + str(self.coordinateS1.getX()), str(self.coordinateS1.getY()))
+        print("coordinateS2: " + str(self.coordinateS2.getX()), str(self.coordinateS2.getY()))
+        print("coordinateS3: " + str(self.coordinateS3.getX()), str(self.coordinateS3.getY()))
+        print("midpoint: " + str(self.midpoint.getX()), str(self.midpoint.getY()))
 
         tmpx = (self.midpoint.getX()- self.coordinateS1.getX() ) / sqrt(pow(self.midpoint.getX() - self.coordinateS1.getX(), 2) + pow(self.midpoint.getY()- self.coordinateS1.getY(), 2))
         tmpy = (self.midpoint.getY()- self.coordinateS1.getY() ) / sqrt(pow(self.midpoint.getX() - self.coordinateS1.getX(), 2) + pow(self.midpoint.getY()- self.coordinateS1.getY(), 2))
@@ -157,19 +162,12 @@ class BalanceSystem:
     def setD(self, d):
         self.Kd = d
 
-    def setSetpoint(self, x, y):
-        self.setPoint.setCoordinate(x, y)
-        # self.clearVariables()
-
     def setSetpoint(self, location: Coordinate):
         self.setPoint = location
-        # self.clearVariables()
-
-    def setMidpoint(self, x, y):
-        self.midpoint.setCoordinate(x, y)
     
     def setMidpoint(self, location: Coordinate):
         self.midpoint = location
+        self.calculateServoData(self.servoCoords)
 
     def calculateActions(self, errors: ServoError, dt):
         tmp = ServoError
@@ -218,7 +216,7 @@ class BalanceSystem:
         error = self.getServoError(ballLocation)
         actions: ServoError = self.calculateActions(error, dt)
         # print("actions", actions.S1, actions.S2, actions.S3)
-        print(actions.S1)
+        print(actions.S1, actions.S2, actions.S3)
         angleS1 = SERVO_MID_ANGLE - (actions.S1 * (MAX_SERVO_CORRECTION/100) )
         angleS2 = SERVO_MID_ANGLE - (actions.S2 * (MAX_SERVO_CORRECTION/100) )
         angleS3 = SERVO_MID_ANGLE - (actions.S3 * (MAX_SERVO_CORRECTION/100) )
