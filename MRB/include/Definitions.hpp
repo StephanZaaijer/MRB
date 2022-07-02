@@ -1,11 +1,11 @@
 #ifndef DEFINITIONS_HPP
 #define DEFINITIONS_HPP
 
-#define BAUDRATE 19200
+#define BAUDRATE 115200
 
 enum servoPins {
-    ONE = 5,
-    TWO = 6,
-    THREE = 9,
+    ONE = 4,
+    TWO = 5,
+    THREE = 6,
 };
 #endif //DEFINITIONS_HPP

@@ -1,11 +1,30 @@
 {
-    "low H": 58,
-    "high H": 94,
-    "low S": 83,
-    "high S": 255,
-    "low V": 89,
-    "high V": 255,
-    "min Rad": 4,
-    "max Rad": 53,
-    "min Dist": 108
+    "ball_filter": {
+        "low H": 59,
+        "high H": 85,
+        "low S": 108,
+        "high S": 255,
+        "low V": 0,
+        "high V": 255,
+        "min Rad": 14,
+        "max Rad": 20,
+        "min Dist": 122,
+        "dp": 34,
+        "param1": 49,
+        "param2": 35
+    },
+    "midpoint_filter": {
+        "low H": 0,
+        "high H": 17,
+        "low S": 111,
+        "high S": 255,
+        "low V": 101,
+        "high V": 255,
+        "min Rad": 0,
+        "max Rad": 7,
+        "min Dist": 190,
+        "dp": 5,
+        "param1": 50,
+        "param2": 5
+    }
 }
